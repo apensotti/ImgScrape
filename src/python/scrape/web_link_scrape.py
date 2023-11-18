@@ -10,7 +10,7 @@ from PIL import Image
 import time
 
 #img_url = "https://lh3.googleusercontent.com/p/AF1QipMbZziubGkRy0Zjafrmpgvk9sN7dw9KlLBupQce=s680-w680-h510"
-img_url = "https://www.google.com/search?sca_esv=583219155&rlz=1C1CHBF_enUS830US830&tbs=lf:1,lf_ui:2&tbm=lcl&sxsrf=AM9HkKnqKGJXMBORN3ngDEAKr3o6NZjmyw:1700189717482&q=drywall+boulder&rflfq=1&num=10&sa=X&ved=2ahUKEwi01aShhMqCAxWMomoFHd6EBkEQjGp6BAgfEAE&biw=1920&bih=931&dpr=1#rlfi=hd:;si:8732774125950856829,l,Cg9kcnl3YWxsIGJvdWxkZXJI76ulmOaAgIAIWhcQABgAGAEiD2RyeXdhbGwgYm91bGRlcnoHQm91bGRlcpIBE2RyeV93YWxsX2NvbnRyYWN0b3KaASRDaGREU1VoTk1HOW5TMFZKUTBGblNVUjVOWEo1WkRoM1JSQUKqAVoKCS9tLzAxd19wNwoIL20vMG5jajgQASoLIgdkcnl3YWxsKAAyHxABIhsvpyVJ9PE3-OaLQsqImDJLFWPGKLuFXgWfxKwyExACIg9kcnl3YWxsIGJvdWxkZXLgAQA;mv:[[40.08554743245166,-105.16690212424315],[39.98223956754832,-105.33289867575681]]"
+img_url = "https://www.google.com/search?q=drywall+chicago&sca_esv=583219155&rlz=1C1CHBF_enUS830US830&biw=1920&bih=931&tbm=lcl&ei=M-9YZZHGJYav0PEPubya2AQ&oq=drywall+chicago&gs_lp=Eg1nd3Mtd2l6LWxvY2FsIg9kcnl3YWxsIGNoaWNhZ28qAggAMgUQABiABDIGEAAYFhgeMgYQABgWGB4yCBAAGBYYHhgPMgYQABgWGB4yBhAAGBYYHjIGEAAYFhgeMgYQABgWGB4yBhAAGBYYHjIGEAAYFhgeSKo_UPcGWNUvcAJ4AJABAJgBf6AB0wmqAQM1Lje4AQHIAQD4AQHCAgsQABiABBiKBRiGA8ICCxAAGIAEGIoFGJECwgIHEAAYgAQYDcICChAAGIAEGIoFGEPCAg4QABiABBiKBRixAxiRAsICDhAAGIAEGIoFGMkDGJECwgILEAAYgAQYigUYkgPCAggQABiABBiSA8ICCBAAGIAEGLEDiAYB&sclient=gws-wiz-local#rlfi=hd:;si:;mv:[[41.9984806,-87.58136809999999],[41.7517225,-87.74741390000001]];tbs:lrf:!1m4!1u3!2m2!3m1!1e1!1m4!1u2!2m2!2m1!1e1!2m1!1e2!2m1!1e3!3sIAE,lf:1,lf_ui:2"
 
 options = Options()
 options.add_experimental_option('detach',True)
@@ -29,7 +29,7 @@ def get_images_from_google(url, driver):
     #scroll_listings(driver)
 
     listings = driver.find_elements(By.CLASS_NAME,"dbg0pd")
-    one_listing = listings[7]
+    one_listing = listings[0]
     one_listing.click()
     print('clicked')
     print(len(listings))
@@ -62,7 +62,7 @@ def get_images_from_google(url, driver):
 #
     print(image_urls)
 
-    temp_index = 72
+    temp_index = 126
 
     for i,url in enumerate(image_urls):
         download_image("C:\\Users\\alexp\\src\\ImgScrape\\img\\", url=url, file_name="picture{0}.jpg".format(temp_index))
