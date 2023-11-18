@@ -64,6 +64,7 @@ class ListingScrape:
     def collect_image_urls(self):       
 
         images = self.driver.execute_script("return document.getElementsByClassName('m7eMIc aQg20b')")
+        images
 
         get_link_cmd = "return document.getElementsByClassName('m7eMIc aQg20b').item({0}).currentSrc"
         get_link_cmd2 = "return document.getElementsByClassName('m7eMIc aQg20b').item({0}).dataset['src']"
@@ -75,10 +76,27 @@ class ListingScrape:
             elif 'http' in self.driver.execute_script(get_link_cmd2.format(i)):
                 self.image_urls.append(self.driver.execute_script(get_link_cmd2.format(i)))
                 print("link captured")
+    
+    def download_image(download_path,url,file_name):
+        try:
+            image_content = requests.get(url).content
+            image_file = io.BytesIO(image_content)
+            image = Image.open(image_file)
+            file_path = download_path + file_name
+
+            with open (file_path, "wb") as f:
+                image.save(f,"JPEG")
+            print("Success")
+        except Exception as e:
+            print('Failed -', e)
+
+        print("Success")
+    
+    
         
         
 
-scrape = ListingScrape(google_search='drywall boulder')
+scrape = ListingScrape(google_search='drywall repair boulder')
 scrape.initiate_driver()
 scrape.search_google_maps()
 listings = scrape.listings()
@@ -86,12 +104,18 @@ listings = scrape.listings()
 #scrape.open_images()
 #scrape.collect_image_urls()
 
-for i in range(len(listings)):
+for i in range(8):
     scrape.open_listing(i)
     scrape.open_images()
     scrape.collect_image_urls()
     time.sleep(6)
     scrape.close_images()
+
+temp_index = 0
+
+#for i,url in enumerate(scrape.image_urls):
+#        scrape.download_image("C:\\Users\\alexp\\src\\ImgScrape\\img\\", url=url, file_name="picture{0}.jpg".format(temp_index))
+#        temp_index+=1
 
 print(scrape.image_urls)
 
