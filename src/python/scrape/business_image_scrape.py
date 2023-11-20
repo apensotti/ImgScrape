@@ -14,7 +14,7 @@ from tqdm import tqdm
 import random
 
 class ListingScrape:
-    image_file_index = 345
+    image_file_index = 0
 
     def __init__(self, google_search=""):
         self.google_search = google_search
@@ -135,7 +135,7 @@ class ListingScrape:
     
   
 def main():
-    scrape = ListingScrape(google_search='drywall repair chicago')
+    scrape = ListingScrape(google_search='drywall repair beverly hills ca')
     scrape.get_proxies()
     scrape.set_proxies(0)
     time.sleep(2)
@@ -160,12 +160,15 @@ def main():
 
     temp_index = 0
 
-    print("Downloading {0} images".format(scrape.image_urls))
+    print("Downloading {0} images".format(len(scrape.image_urls)))
 
     for url in scrape.image_urls:
-            filename = "picture{0}.jpg".format(temp_index)
-            scrape.download_image("C:\\Users\\alexp\\src\\ImgScrape\\img\\", url, filename)
-            temp_index+=1
+            try:
+                filename = "picture{0}.jpg".format(ListingScrape.image_file_index)
+                scrape.download_image("C:\\Users\\alexp\\src\\ImgScrape\\img\\", url, filename)
+                ListingScrape.image_file_index+=1
+            except:
+                pass
 
     print("Done")
 
