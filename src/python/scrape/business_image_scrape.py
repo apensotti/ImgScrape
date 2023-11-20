@@ -10,10 +10,11 @@ import io
 from PIL import Image
 import time
 import csv
+from tqdm import tqdm
 import random
 
 class ListingScrape:
-    image_file_index = 0
+    image_file_index = 345
 
     def __init__(self, google_search=""):
         self.google_search = google_search
@@ -64,28 +65,24 @@ class ListingScrape:
     def search_google_maps(self):
         img_url = "https://www.google.com/search?q=drywall+chicago&sca_esv=583219155&rlz=1C1CHBF_enUS830US830&biw=1920&bih=931&tbm=lcl&ei=M-9YZZHGJYav0PEPubya2AQ&oq=drywall+chicago&gs_lp=Eg1nd3Mtd2l6LWxvY2FsIg9kcnl3YWxsIGNoaWNhZ28qAggAMgUQABiABDIGEAAYFhgeMgYQABgWGB4yCBAAGBYYHhgPMgYQABgWGB4yBhAAGBYYHjIGEAAYFhgeMgYQABgWGB4yBhAAGBYYHjIGEAAYFhgeSKo_UPcGWNUvcAJ4AJABAJgBf6AB0wmqAQM1Lje4AQHIAQD4AQHCAgsQABiABBiKBRiGA8ICCxAAGIAEGIoFGJECwgIHEAAYgAQYDcICChAAGIAEGIoFGEPCAg4QABiABBiKBRixAxiRAsICDhAAGIAEGIoFGMkDGJECwgILEAAYgAQYigUYkgPCAggQABiABBiSA8ICCBAAGIAEGLEDiAYB&sclient=gws-wiz-local#rlfi=hd:;si:;mv:[[41.9984806,-87.58136809999999],[41.7517225,-87.74741390000001]];tbs:lrf:!1m4!1u3!2m2!3m1!1e1!1m4!1u2!2m2!2m1!1e1!2m1!1e2!2m1!1e3!3sIAE,lf:1,lf_ui:2"
         self.driver.get(img_url) 
-        # Find the search bar element and type your query
         search_box = self.driver.find_element(By.NAME,"q")
         search_box.clear()
         search_box.send_keys(self.google_search)
-
-        # Press 'Enter' to perform the search
         search_box.send_keys(Keys.RETURN)
-
-        # Wait for the search results to load
-        time.sleep(3)  # You can adjust the wait time based on your internet
+        time.sleep(3)
 
     def listings(self):
         listings = self.driver.find_elements(By.CLASS_NAME,"dbg0pd")
         self.listings_dict[self.google_search] = listings
         return self.listings_dict[self.google_search]
     
-    def open_listing(self,listing):
+    def open_listing(self,listing_index):
+        close_click = self.driver.execute_script("return document.getElementsByClassName('dbg0pd').item({0})".format(listing_index))
         try:
-            listing.click()
+            self.driver.execute_script("arguments[0].click();", close_click)
             time.sleep(2)
         except:
-            print("Failed: Listing Click")
+            print("|__Failed: Listing Click")
 
     def open_images(self):
         image_click = self.driver.find_elements(By.CLASS_NAME,"yOf5Ze")
@@ -93,7 +90,7 @@ class ListingScrape:
             image_click[0].click()
             time.sleep(3)
         except:
-            print("Failed: Open Images Failed")
+            print("|__Failed: Open Images Failed")
             pass
 
     def close_image_preview(self):
@@ -101,7 +98,7 @@ class ListingScrape:
         try:
             self.driver.execute_script("arguments[0].click();",close_click)
         except:
-            print('Failed: Close Image Preview')
+            print('|__Failed: Close Image Preview')
             pass
     
     def close_images(self):
@@ -109,20 +106,23 @@ class ListingScrape:
         try:
             self.driver.execute_script("arguments[0].click();",close_click)
         except:
-            print('Failed: Close Images')
+            print('|__Failed: Close Images')
             pass
 
     def collect_image_urls(self):       
         images = self.driver.execute_script("return document.getElementsByClassName('m7eMIc XPukcf')")
-        print(images)
         get_link_cmd = "return document.getElementsByClassName('m7eMIc XPukcf').item({0}).currentSrc"
         get_link_cmd2 = "return document.getElementsByClassName('m7eMIc XPukcf').item({0}).dataset['src']"
-
-        for i in range(len(images)):
-            if 'http' in self.driver.execute_script(get_link_cmd.format(i)):
-                self.image_urls.append(self.driver.execute_script(get_link_cmd.format(i)))
-            elif 'http' in self.driver.execute_script(get_link_cmd2.format(i)):
-                self.image_urls.append(self.driver.execute_script(get_link_cmd2.format(i)))
+        try:
+            for i in range(len(images)):
+                if 'http' in self.driver.execute_script(get_link_cmd.format(i)):
+                    self.image_urls.append(self.driver.execute_script(get_link_cmd.format(i)))
+                elif 'http' in self.driver.execute_script(get_link_cmd2.format(i)):
+                    self.image_urls.append(self.driver.execute_script(get_link_cmd2.format(i)))
+                else:
+                    pass
+        except:
+            pass
     
     def download_image(self,download_path,url,file_name):
         
@@ -134,33 +134,33 @@ class ListingScrape:
             image.save(f,"JPEG")
     
   
-def run():
-    scrape = ListingScrape(google_search='drywall repair boulder')
+def main():
+    scrape = ListingScrape(google_search='drywall repair chicago')
     scrape.get_proxies()
     scrape.set_proxies(0)
     time.sleep(2)
     scrape.search_google_maps()
     listings = scrape.listings()
-    #scrape.open_listing(0)
-    #scrape.open_images()
-    #scrape.close_image_preview()
-    #scrape.collect_image_urls()
 
-    for l in listings[:1]:
-        scrape.open_listing(l)
-        time.sleep(2)
-        scrape.open_images()
-        time.sleep(2)
-        scrape.close_image_preview()
-        time.sleep(2)
-        scrape.collect_image_urls()
-        time.sleep(2)
-        scrape.close_images()
-        time.sleep(2)
+    temp_list = []
+    for i,l in enumerate(listings):
+        print("listing {0}/{1}".format(i+1,len(listings)))
+        if l not in temp_list:
+            scrape.open_listing(i)
+            time.sleep(2)
+            scrape.open_images()
+            time.sleep(2)
+            scrape.close_image_preview()
+            time.sleep(2)
+            scrape.collect_image_urls()
+            time.sleep(2)
+            scrape.close_images()
+            time.sleep(2)
+            temp_list.append(l)
 
     temp_index = 0
 
-    print(scrape.image_urls)
+    print("Downloading {0} images".format(scrape.image_urls))
 
     for url in scrape.image_urls:
             filename = "picture{0}.jpg".format(temp_index)
@@ -175,7 +175,8 @@ def test_proxy_servers():
     obj.set_proxies(0)
     obj.test_proxies()
 
-run()
+if __name__ == "__main__":
+    main()
 
 
 
