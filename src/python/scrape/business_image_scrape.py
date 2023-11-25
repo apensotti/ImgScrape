@@ -1,10 +1,11 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.keys import Keys
 from extension import proxies
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import requests
 import io
 from PIL import Image
@@ -12,6 +13,7 @@ import time
 import csv
 from tqdm import tqdm
 import random
+import math
 
 class ListingScrape:
     image_file_index = 0
@@ -21,6 +23,7 @@ class ListingScrape:
         self.chrome_options = webdriver.ChromeOptions()
         self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),options=self.chrome_options)        
         self.listings_dict = {}
+        self.image_elements = []
         self.image_urls = []
         self.proxy_list = []
         
@@ -93,6 +96,17 @@ class ListingScrape:
             print("|__Failed: Open Images Failed")
             pass
 
+    def click_image(self, index):
+        click_image = self.driver.execute_script("return document.getElementsByClassName('m7eMIc XPukcf')")
+        exception = "return document.getElementsByClassName('m7eMIc XPukcf')[{0}].currentSrc"
+        try:
+            if "https://streetview" not in click_image[index].getAttribute('src'):
+                self.driver.execute_script("arguments[0].click();",click_image[index])
+            else:
+                self.driver.execute_script("arguments[0].click();",click_image[index-2])
+        except:
+            pass
+
     def close_image_preview(self):
         close_click = self.driver.execute_script("return document.getElementsByClassName('tN4Gf syzQLe A1UKib s3DPGe Rj2Mlf OLiIxf PDpWxe LQeN7 kOhBoc s73B3c VtTx9b Q8G3mf').item(2)")
         try:
@@ -100,7 +114,30 @@ class ListingScrape:
         except:
             print('|__Failed: Close Image Preview')
             pass
-    
+
+    def load_images(self):
+        images_format = "return document.getElementsByClassName('m7eMIc XPukcf')[{0}].getAttribute('src')"
+        images_get = self.driver.execute_script("return document.getElementsByClassName('m7eMIc XPukcf')")
+        images = []
+
+        http_list = []
+        
+        images.append(images_get[0])
+        for i in range(len(images)):
+            self.driver.execute_script("arguments[0].click();", images[0])
+            images.append(self.driver.execute_script("return document.getElementsByClassName('m7eMIc XPukcf')"))
+            if "streetview" not in self.driver.execute_script(images_format.format(i)):
+                self.driver.execute_script("arguments[0].click();", images[i])
+                print("No Streetview")
+            else:
+                self.driver.execute_script("arguments[0].click();", images[i])
+                print('Streetview')
+            
+            #print(images)
+                
+
+        self.image_elements = images
+        
     def close_images(self):
         close_click = self.driver.execute_script("return document.getElementsByClassName('CeiTH yHy1rc eT1oJ mN1ivc lDYWtd')[0]")
         try:
@@ -133,7 +170,6 @@ class ListingScrape:
         with open (file_path, "wb") as f:
             image.save(f,"JPEG")
     
-  
 def main():
     scrape = ListingScrape(google_search='drywall repair beverly hills ca')
     scrape.get_proxies()
@@ -150,11 +186,20 @@ def main():
             time.sleep(2)
             scrape.open_images()
             time.sleep(2)
-            scrape.close_image_preview()
+            scrape.load_images()
             time.sleep(2)
-            scrape.collect_image_urls()
-            time.sleep(2)
-            scrape.close_images()
+            
+            temp = 52
+            if len(scrape.image_elements) > 51:
+                for i in range(math.floor(len(scrape.image_elements)/51)):
+                    scrape.collect_image_urls()
+                    scrape.click_image(temp)
+                    temp += 51
+                scrape.close_images()
+            else:
+                scrape.collect_image_urls()
+                scrape.close_images()
+
             time.sleep(2)
             temp_list.append(l)
 
@@ -172,14 +217,32 @@ def main():
 
     print("Done")
 
-def test_proxy_servers():
-    obj = ListingScrape(google_search="")
+def test():
+    obj = ListingScrape(google_search="drywall repair beverly hills ca")
     obj.get_proxies()
-    obj.set_proxies(0)
-    obj.test_proxies()
+    obj.set_proxies(1)
+    obj.search_google_maps()
+    obj.open_listing(2)
+    time.sleep(2)
+    obj.open_images()
+    time.sleep(2)
+    obj.load_images()
+    time.sleep(2)
 
+    
+    #temp = 52
+    #for i in range(math.floor(len(obj.image_elements)/51)):
+    #    if len(obj.image_elements) > 51:
+    #        obj.collect_image_urls()
+    #        obj.click_image(temp)
+    #        obj.close_images
+    #        temp += 51
+    #    else:
+    #        obj.collect_image_urls()
+    #        obj.close_images
+    
 if __name__ == "__main__":
-    main()
+    test()
 
 
 
