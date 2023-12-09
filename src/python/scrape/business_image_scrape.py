@@ -11,12 +11,13 @@ import io
 from PIL import Image
 import time
 import csv
+from tqdm import tqdm
 import math
 
 class ListingScrape:
-    image_file_index = 0
+    image_file_index = 6063
 
-    def __init__(self, google_search=""):
+    def __init__(self,google_search=''):
         self.google_search = google_search
         self.chrome_options = webdriver.ChromeOptions()
         self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),options=self.chrome_options)        
@@ -122,7 +123,7 @@ class ListingScrape:
             while True:            
                 self.driver.execute_script("return document.querySelector('.HHuGCe').scrollTo(0,document.querySelector('.HHuGCe').scrollHeight)")
 
-                time.sleep(2)
+                time.sleep(1)
 
                 new_height = self.driver.execute_script("return document.querySelector('.HHuGCe').scrollHeight")
                 if new_height == last_height:
@@ -138,61 +139,69 @@ class ListingScrape:
         except:
             print('|__Failed: Close Images')
             pass
-
-    def collect_image_urls2(self):
-        get_link_cmd = "return document.getElementsByClassName('m7eMIc aQg20b').item({0}).currentSrc"
-        get_img_cmd = "return document.getElementsByClassName('m7eMIc XPukcf')[{0}].getAttribute('src')"
-        images = self.driver.execute_script("return document.getElementsByClassName('m7eMIc XPukcf')")
-        
-        for i in range(0,len(images),len(images)//2):
-            if 'streetview' in self.driver.execute_script(get_img_cmd.format(i)):
-                try:
-                    self.driver.execute_script("arguments[0].click();",images[i+1])
-                except:
-                    pass
-            else:
-                self.driver.execute_script("arguments[0].click();",images[i])
-
-        loaded_images = self.driver.execute_script("return document.getElementsByClassName('m7eMIc aQg20b')")
-
-        for i in range(len(loaded_images)):
-            try:
-                self.image_urls.append(self.driver.execute_script(get_link_cmd.format(i)))
-            except:
-                break
-
-
-
-    def collect_image_urls(self):       
-        images = self.driver.execute_script("return document.getElementsByClassName('m7eMIc aQg20b')")
-        get_link_cmd = "return document.getElementsByClassName('m7eMIc aQg20b').item({0}).currentSrc"
-        get_link_cmd2 = "return document.getElementsByClassName('m7eMIc aQg20b').item({0}).dataset['src']"
+    
+    def carousel_click(self):
         try:
-            for i in range(len(images)):
-                if 'http' in self.driver.execute_script(get_link_cmd.format(i)):
-                    self.image_urls.append(self.driver.execute_script(get_link_cmd.format(i)))
-                elif 'http' in self.driver.execute_script(get_link_cmd2.format(i)):
-                    self.image_urls.append(self.driver.execute_script(get_link_cmd2.format(i)))
-                else:
-                    pass
+            button = self.driver.execute_script("return document.getElementsByClassName('m7eMIc XPukcf')")
+            get_link_cmd = "return document.getElementsByClassName('m7eMIc aQg20b')"
+            for i,link in enumerate(get_link_cmd):
+                self.driver.execute_script("arguments[0].click()",button[3])
         except:
             pass
 
-        print("{0} image links collected".format(len(images)))
+    def collect_image_urls2(self):
+        #try:
+            src = "return document.getElementsByClassName('m7eMIc aQg20b')[{0}].getAttribute('src')"
+            data_src = "return document.getElementsByClassName('m7eMIc aQg20b')[{0}].getAttribute('data-src')"
+
+            thumbnails = self.driver.execute_script("return document.getElementsByClassName('m7eMIc XPukcf')")
+            thumbnail_link = "return document.getElementsByClassName('m7eMIc XPukcf')[{0}].getAttribute('src')"
+
+            print(len(thumbnails))
+            for i,link in enumerate(thumbnails):
+
+                if i%5 == 0:
+                    self.driver.execute_script("return document.querySelector('.HHuGCe').scrollBy(0,600)")
+
+                try:
+                    if 'streetview' not in self.driver.execute_script(thumbnail_link.format(i+5)):
+                        self.driver.execute_script("arguments[0].click();",thumbnails[i+5])
+                    else:
+                        self.driver.execute_script("arguments[0].click();",thumbnails[i+6])
+                except:
+                    pass
+
+                try:
+                    if i%51 == 0:
+                        images = self.driver.execute_script("return document.getElementsByClassName('m7eMIc aQg20b')")
+
+                        for i,image in enumerate(images):
+                            if 'data:image' in image.get_attribute('src'):
+                                self.image_urls.append(image.get_attribute('data-src'))
+                            else:
+                                self.image_urls.append(image.get_attribute('src'))        
+                except:
+                    pass
     
     def download_image(self,download_path,url,file_name):
+        try:
+            image_content = requests.get(url).content
+            image_file = io.BytesIO(image_content)
+            image = Image.open(image_file)
+            file_path = download_path + file_name
+            with open (file_path, "wb") as f:
+                image.save(f,"JPEG")
+        except:
+            pass
+
+    def run_scrape(self,search):
+        pass
         
-        image_content = requests.get(url).content
-        image_file = io.BytesIO(image_content)
-        image = Image.open(image_file)
-        file_path = download_path + file_name
-        with open (file_path, "wb") as f:
-            image.save(f,"JPEG")
     
 def main():
-    scrape = ListingScrape(google_search='drywall chicago')
+    scrape = ListingScrape(google_search='drywall repair tampa fl')
     scrape.get_proxies()
-    scrape.set_proxies(0)
+    scrape.set_proxies(1)
     time.sleep(2)
     scrape.search_google_maps()
     listings = scrape.listings()
@@ -202,35 +211,37 @@ def main():
         print("listing {0}/{1}".format(i+1,len(listings)))
         if l not in temp_list:
             scrape.open_listing(i)
+            print('opening listing')
             time.sleep(1)
+            print('opening images')
             scrape.open_images()
             time.sleep(1)
+            print('loading images')
             scrape.load_images()
-            time.sleep(1)         
+            time.sleep(1)
+            print('collecting image links')         
             scrape.collect_image_urls2()
             time.sleep(1)
+            print('next...')
             scrape.close_images()
             temp_list.append(l)
 
     print("Downloading {0} images".format(len(scrape.image_urls)))
 
-    for url in scrape.image_urls:
-        try:
-            filename = "picture{0}.jpg".format(ListingScrape.image_file_index)
-            scrape.download_image("C:\\Users\\alexp\\src\\ImgScrape\\img\\", url, filename)
-            ListingScrape.image_file_index+=1
-        except:
-            pass
+    for i,url in enumerate(tqdm(scrape.image_urls,ncols=500)):
+        filename = "picture{0}.jpg".format(ListingScrape.image_file_index)
+        scrape.download_image("C:\\Users\\alexp\\src\\ImgScrape\\img\\", url, filename)
+        ListingScrape.image_file_index+=1
             
 
     print("Done")
 
 def test():
-    obj = ListingScrape(google_search="drywall repair beverly hills ca")
+    obj = ListingScrape(google_search="drywall chicago")
     obj.get_proxies()
     obj.set_proxies(1)
     obj.search_google_maps()
-    obj.open_listing(5)
+    obj.open_listing(1)
     time.sleep(2)
     obj.open_images()
     time.sleep(2)
@@ -240,13 +251,12 @@ def test():
     time.sleep(2)
     print("Downloading {0} images".format(len(obj.image_urls)))
 
-    for url in obj.image_urls:
-            try:
-                filename = "picture{0}.jpg".format(ListingScrape.image_file_index)
-                obj.download_image("C:\\Users\\alexp\\src\\ImgScrape\\img\\", url, filename)
-                ListingScrape.image_file_index+=1
-            except:
-                pass
+    for i,url in enumerate(obj.image_urls):
+        filename = "picture{0}.jpg".format(i)
+        obj.download_image("C:\\Users\\alexp\\src\\ImgScrape\\img\\", url, filename)
+        ListingScrape.image_file_index+=1
+        time.sleep(1)
+        
 #
     print("Done")
     
