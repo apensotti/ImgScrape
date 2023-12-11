@@ -15,7 +15,7 @@ from tqdm import tqdm
 import math
 
 class ListingScrape:
-    image_file_index = 6063
+    image_file_index = 8798
 
     def __init__(self,google_search=''):
         self.google_search = google_search
@@ -199,7 +199,7 @@ class ListingScrape:
         
     
 def main():
-    scrape = ListingScrape(google_search='drywall repair tampa fl')
+    scrape = ListingScrape(google_search='drywall repair denver co')
     scrape.get_proxies()
     scrape.set_proxies(1)
     time.sleep(2)
@@ -228,7 +228,7 @@ def main():
 
     print("Downloading {0} images".format(len(scrape.image_urls)))
 
-    for i,url in enumerate(tqdm(scrape.image_urls,ncols=500)):
+    for i,url in enumerate(tqdm(scrape.image_urls)):
         filename = "picture{0}.jpg".format(ListingScrape.image_file_index)
         scrape.download_image("C:\\Users\\alexp\\src\\ImgScrape\\img\\", url, filename)
         ListingScrape.image_file_index+=1
