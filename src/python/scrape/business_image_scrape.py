@@ -15,7 +15,7 @@ from tqdm import tqdm
 import math
 
 class ListingScrape:
-    image_file_index = 8798
+    image_file_index = 10382
 
     def __init__(self,google_search=''):
         self.google_search = google_search
@@ -167,7 +167,7 @@ class ListingScrape:
                     if 'streetview' not in self.driver.execute_script(thumbnail_link.format(i+5)):
                         self.driver.execute_script("arguments[0].click();",thumbnails[i+5])
                     else:
-                        self.driver.execute_script("arguments[0].click();",thumbnails[i+6])
+                        self.driver.execute_script("arguments[0].click();",thumbnails[i-1])
                 except:
                     pass
 
@@ -199,7 +199,7 @@ class ListingScrape:
         
     
 def main():
-    scrape = ListingScrape(google_search='drywall repair denver co')
+    scrape = ListingScrape(google_search='drywall repair boulder')
     scrape.get_proxies()
     scrape.set_proxies(1)
     time.sleep(2)
@@ -207,7 +207,7 @@ def main():
     listings = scrape.listings()
 
     temp_list = []
-    for i,l in enumerate(listings):
+    for i,l in enumerate(listings[5:8]):
         print("listing {0}/{1}".format(i+1,len(listings)))
         if l not in temp_list:
             scrape.open_listing(i)
@@ -237,11 +237,11 @@ def main():
     print("Done")
 
 def test():
-    obj = ListingScrape(google_search="drywall chicago")
+    obj = ListingScrape(google_search="drywall repair denver co")
     obj.get_proxies()
     obj.set_proxies(1)
     obj.search_google_maps()
-    obj.open_listing(1)
+    obj.open_listing(5)
     time.sleep(2)
     obj.open_images()
     time.sleep(2)
@@ -251,11 +251,11 @@ def test():
     time.sleep(2)
     print("Downloading {0} images".format(len(obj.image_urls)))
 
-    for i,url in enumerate(obj.image_urls):
-        filename = "picture{0}.jpg".format(i)
-        obj.download_image("C:\\Users\\alexp\\src\\ImgScrape\\img\\", url, filename)
-        ListingScrape.image_file_index+=1
-        time.sleep(1)
+    #for i,url in enumerate(obj.image_urls):
+    #    filename = "picture{0}.jpg".format(i)
+    #    obj.download_image("C:\\Users\\alexp\\src\\ImgScrape\\img\\", url, filename)
+    #    ListingScrape.image_file_index+=1
+    #    time.sleep(1)
         
 #
     print("Done")
